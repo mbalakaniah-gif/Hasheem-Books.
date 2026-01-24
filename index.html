@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hasheem Suppliers</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+body { background: #f0f2f5; padding: 10px; }
+
+/* Logo */
+.logo-circle { width: 100px; height: 100px; border-radius: 50%; background: white; margin: 0 auto 10px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+.logo-circle img { width: 80%; }
+
+/* Header */
+.header { text-align: center; background: linear-gradient(to right,#2c3e50,#34495e); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+.header .company-name { font-size: 1.4rem; font-weight: bold; }
+.header .contact { font-size: 0.9rem; line-height: 1.3; }
+
+/* Form */
+.form-group { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.form-col { flex: 1; }
+label { display: block; margin-bottom: 5px; font-weight: bold; color: #2c3e50; }
+input, select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; }
+
+/* Table */
+.table-container { background: white; padding: 10px; border-radius: 10px; overflow-x:auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom:15px; }
+table { width:100%; border-collapse: collapse; min-width:500px; }
+th, td { border:1px solid #ddd; padding:10px; text-align:center; font-size:14px; }
+th { background:#2c3e50; color:white; }
+.amount-cell { font-weight:bold; color:#e74c3c; }
+
+/* Total */
+.total-box { background:#fff8e1; padding:15px; border-radius:10px; border:2px dashed #e74c3c; text-align:center; font-weight:bold; font-size:1.2rem; margin-bottom:15px; }
+
+/* Buttons */
+.buttons { display:flex; gap:10px; margin-bottom:15px; }
+.button { flex:1; padding:12px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; font-size:16px; }
+.add-btn { background:#27ae60; }
+.pdf-btn { background:#3498db; }
+
+/* Footer */
+.footer { background:white; padding:15px; text-align:center; border-radius:10px; font-style:italic; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+</style>
+</head>
+<body>
+
+<!-- Logo -->
+<div class="logo-circle"><img src="1.png" alt="Logo"></div>
+
+<!-- Header -->
+<div class="header">
+  <div class="company-name">HASHEEM SUPPLIERS</div>
+  <div class="contact">Lilongwe Main Market, Shop 47 | 📞 0999 954 649 | 0888 651 319 | 📧 hasheemsuppliers@gmail.com</div>
+</div>
+
+<!-- Document Info -->
+<div class="form-group">
+  <div class="form-row">
+    <div class="form-col">
+      <label>Document Type</label>
+      <select id="docType">
+        <option>Quotation</option>
+        <option>Receipt</option>
+      </select>
+    </div>
+    <div class="form-col">
+      <label>Customer Name</label>
+      <input type="text" id="customer" placeholder="Customer name">
+    </div>
+  </div>
+</div>
+
+<!-- Items Table -->
+<div class="table-container">
+  <table id="itemsTable">
+    <thead>
+      <tr><th>Description</th><th>Qty</th><th>Price (MWK)</th><th>Amount (MWK)</th></tr>
+    </thead>
+    <tbody id="itemsBody"></tbody>
+  </table>
+</div>
+
+<!-- Total -->
+<div class="total-box">TOTAL: MWK <span id="totalAmount">0.00</span></div>
+
+<!-- Buttons -->
+<div class="buttons">
+  <button class="button add-btn" onclick="addNewRow()">+ Add Item</button>
+  <button class="button pdf-btn" onclick="generatePDF()">📄 Create PDF</button>
+</div>
+
+<!-- Footer -->
+<div class="footer">Thank you for choosing Hasheem Suppliers! Quality products. Trusted service.</div>
+
+<script>
+window.onload = function(){ addNewRow(); document.getElementById('customer').focus(); };
+
+function addNewRow(){
+  var tbody = document.getElementById('itemsBody');
+  var rowCount = tbody.rows.length + 1;
+  tbody.innerHTML += `<tr id="row${rowCount}">
+    <td><input class="item-desc" type="text" placeholder="Product description" onkeyup="calculateRow(${rowCount})"></td>
+    <td><input class="item-qty" type="number" value="1" min="1" onkeyup="calculateRow(${rowCount})" onchange="calculateRow(${rowCount})"></td>
+    <td><input class="item-price" type="number" value="0" min="0" step="0.01" onkeyup="calculateRow(${rowCount})" onchange="calculateRow(${rowCount})"></td>
+    <td class="amount-cell" id="amount${rowCount}">0.00</td>
+  </tr>`;
+  document.querySelector(`#row${rowCount} .item-desc`).focus();
+  updateTotal();
+}
+
+function calculateRow(rowNum){
+  var row = document.getElementById('row'+rowNum);
+  var qty = parseFloat(row.querySelector('.item-qty').value)||0;
+  var price = parseFloat(row.querySelector('.item-price').value)||0;
+  row.querySelector('.amount-cell').textContent=(qty*price).toFixed(2);
+  updateTotal();
+}
+
+function updateTotal(){
+  var total=0;
+  document.querySelectorAll('.amount-cell').forEach(a=>total+=parseFloat(a.textContent)||0);
+  document.getElementById('totalAmount').textContent=total.toFixed(2);
+}
+
+function generatePDF(){
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF('p','mm','a4');
+  var y=20;
+
+  // Faded watermark
+  doc.setFontSize(100); doc.setTextColor(200,200,200); doc.text("⚡",105,150,{align:"center",angle:45});
+
+  // Header
+  doc.setFontSize(16); doc.setTextColor(44,62,80); doc.text("HASHEEM SUPPLIERS",105,y,{align:"center"}); y+=10;
+  doc.setFontSize(10); doc.setTextColor(0,0,0);
+  doc.text("Lilongwe Main Market, Shop 47",105,y,{align:"center"}); y+=5;
+  doc.text("📞 0999 954 649 | 0888 651 319 | 📧 hasheemsuppliers@gmail.com",105,y,{align:"center"}); y+=10;
+
+  // Document info
+  var date = new Date();
+  doc.text("Date: "+date.toLocaleDateString(),14,y);
+  var customer = document.getElementById('customer').value||"Not specified";
+  doc.text("Customer: "+customer,105,y,{align:"center"}); y+=10;
+
+  // Table
+  var rows=[];
+  document.querySelectorAll("#itemsBody tr").forEach(r=>{
+    var desc=r.querySelector(".item-desc").value;
+    var qty=r.querySelector(".item-qty").value;
+    var price=r.querySelector(".item-price").value;
+    var amt=r.querySelector(".amount-cell").textContent;
+    if(desc) rows.push([desc,qty,price,amt]);
+  });
+
+  doc.autoTable({
+    head:[["Description","Qty","Price (MWK)","Amount (MWK)"]],
+    body:rows,
+    startY:y,
+    theme:'grid',
+    headStyles:{fillColor:[44,62,80],textColor:[255,255,255]},
+    styles:{fontSize:10}
+  });
+
+  y=doc.lastAutoTable.finalY+10;
+  var total=document.getElementById('totalAmount').textContent;
+  doc.setFontSize(12); doc.setFont(undefined,'bold'); doc.text("TOTAL: MWK "+total,105,y,{align:"right"});
+
+  y+=10; doc.setFont(undefined,'normal'); doc.setFontSize(10);
+  doc.text("Thank you for choosing Hasheem Suppliers!",105,y,{align:"center"});
+
+  doc.save("Hasheem_Document.pdf");
+  alert("✅ PDF created successfully!");
+}
+</script>
+</body>
+</html>
