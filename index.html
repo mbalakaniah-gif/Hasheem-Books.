@@ -175,6 +175,10 @@ td input {
             <label>Customer Name</label>
             <input type="text" id="customer" placeholder="Customer name">
         </div>
+        <div class="form-col">
+            <label>Date</label>
+            <input type="text" id="docDate" placeholder="e.g. 06/02/2026">
+        </div>
     </div>
 </div>
 
@@ -189,7 +193,6 @@ td input {
             </tr>
         </thead>
         <tbody id="itemsBody">
-            <!-- Rows will be added here -->
         </tbody>
     </table>
 </div>
@@ -213,7 +216,6 @@ window.onload = function() { addNewRow(); };
 // Add row
 function addNewRow() {
     const tbody = document.getElementById('itemsBody');
-    const rowNum = tbody.rows.length + 1;
     const newRow = `<tr>
         <td><input type="text" placeholder="Product description"></td>
         <td><input type="number" value="1" min="1"></td>
@@ -229,6 +231,7 @@ function generatePDF() {
     const doc = new jsPDF();
     const docType = document.getElementById("docType").value;
     const customer = document.getElementById("customer").value || "N/A";
+    const docDate = document.getElementById("docDate").value || "__________";
     const docNo = "HS-" + Math.floor(100000 + Math.random() * 900000);
 
     // HEADER
@@ -244,7 +247,7 @@ function generatePDF() {
     doc.setFontSize(12);
     doc.text(docType.toUpperCase(), 105, 38, { align: "center" });
     doc.setFont("helvetica","normal");
-    doc.text(`No: ${docNo}`, 14, 48);
+    doc.text(`No: ${docNo}    Date: ${docDate}`, 14, 48);
     doc.text(`Name: ${customer}`, 14, 55);
 
     // TABLE
@@ -258,7 +261,7 @@ function generatePDF() {
         total += amount;
         body.push([item, qty, `MWK ${price.toFixed(2)}`, `MWK ${amount.toFixed(2)}`]);
     });
-    // TOTAL row
+
     body.push([
         { content: "TOTAL", colSpan: 3, styles: { halign: "right", fontStyle: "bold" } },
         { content: `MWK ${total.toFixed(2)}`, styles: { fontStyle: "bold" } }
